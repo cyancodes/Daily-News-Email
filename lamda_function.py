@@ -7,16 +7,8 @@ import datetime
 import os
 
 def lambda_handler(event, context):
-    # Setup Topic and URLs to scrape
-
-    url_dict = {"Top Stories":"https://feeds.bbci.co.uk/news/rss.xml",
-                "World":"http://feeds.bbci.co.uk/news/world/rss.xml",
-            "UK":"http://feeds.bbci.co.uk/news/uk/rss.xml",
-            "Business":"http://feeds.bbci.co.uk/news/business/rss.xml",
-            "Politics":"http://feeds.bbci.co.uk/news/politics/rss.xml",
-            "Technology":"https://feeds.bbci.co.uk/news/technology/rss.xml"}
+    # Set number of entries to include of each topic
     number_of_entries = 5
-    email_string = ""
 
     # Import Emails and Password from environment variables
     sender_email = os.environ['email'] 
@@ -30,18 +22,43 @@ def lambda_handler(event, context):
         return header, body, url, time
 
 
-    # Scraping The Headings
+    # Function for Scraping The Headings
 
-    for (heading,url) in url_dict.items():
-        email_string = email_string+heading+' - '+'\n'
-        web_page = requests.get(url)
-        soup = bs4.BeautifulSoup(web_page.text,"xml")
+    def scraper(heading,url):
+        current_list = [heading+' -\n\n'] # The first entry of the list is the heading with a space
+        web_page = requests.get(url) # grabs web page
+        soup = bs4.BeautifulSoup(web_page.text,"xml") # creates the soup
         
-        for item in soup.select('item')[:number_of_entries]:
+        for item in soup.select('item'): # runs this code for each item found
             header,body,url,time = extrator(item.text)
-            #print(f'\t{header}:\n\t{body}\n\t{url}\n\t{time}\n')
-            email_string = email_string+f'\t{header}:\n\t{body}\n\t{url}\n\t{time}\n'+'\n'
+            current_list.append(f'{header}:\n{body}\n{url}\n{time}\n'+'\n')
+    
+        return current_list
 
+    # Scraping and creating a list for each topic
+
+    top_stories = scraper("Top Stories","https://feeds.bbci.co.uk/news/rss.xml")
+    world = scraper("World","http://feeds.bbci.co.uk/news/world/rss.xml")
+    uk = scraper("UK","http://feeds.bbci.co.uk/news/uk/rss.xml")
+    business = scraper("Business","http://feeds.bbci.co.uk/news/business/rss.xml")
+    politics = scraper("Politics","http://feeds.bbci.co.uk/news/politics/rss.xml")
+    technology = scraper("Technology","https://feeds.bbci.co.uk/news/technology/rss.xml")
+    master_list = [top_stories,world,uk,business,politics,technology]
+
+    # Creates a unique list of news stories to include in the email
+
+    email_list = []
+    for category in master_list:
+        index = 0
+        for entry in category:
+            if index < number_of_entries+1:
+                if entry not in email_list: # This line of code checks to see that an entry hasn't already featured
+                    email_list.append(entry)
+                    index +=1
+            else:
+                break
+
+    email_string = ''.join(email_list) # converts the email list into a single string ready to email
 
     # Emailing The Headings
 
