@@ -26,7 +26,10 @@ def lambda_handler(event, context):
     # Function to split the result of the web scrape
     def extrator(item):
         # Creates a list of header, body, long url, short url, time
-        _, header, body, _, url, time, _ = item.split('\n')
+        try:
+            _, header, body, _, url, time, _ = item.split('\n')
+        except:
+            _, header, body, _, url, time, _, _ = item.split('\n')
         return header, body, url, time
 
 
