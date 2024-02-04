@@ -54,10 +54,11 @@ def lambda_handler(event, context):
     for category in master_list:
         index = 0
         for entry in category:
-            if index < number_of_entries+1:
-                if entry not in email_list: # This line of code checks to see that an entry hasn't already featured
+            if index < number_of_entries + 1: # The index hasn't yet reached the number of entries + 1 for the heading
+                found = any(entry[:10] == news_item[:10] for news_item in email_list) # Searches the current entry to see if it is found in the current email_list
+                if not found:
                     email_list.append(entry)
-                    index +=1
+                    index += 1
             else:
                 break
 
