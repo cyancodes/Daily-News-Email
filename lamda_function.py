@@ -16,8 +16,7 @@ def lambda_handler(event, context):
     password = os.environ['password'] 
 
     # Function to split the result of the web scrape
-    
-    def extrator(item):
+    def extractor(item):
         # Creates a list of header, body, long url, short url, time
         cleaned_list = [entry for entry in item.split('\n') if entry != '']
         header, body, url, time = cleaned_list[0], cleaned_list[1], cleaned_list[3], cleaned_list[4]
@@ -41,7 +40,7 @@ def lambda_handler(event, context):
         return current_list
 
     # Scraping and creating a list for each topic
-
+    
     top_stories = scraper("Top Stories","https://feeds.bbci.co.uk/news/rss.xml")
     world = scraper("World","http://feeds.bbci.co.uk/news/world/rss.xml")
     uk = scraper("UK","http://feeds.bbci.co.uk/news/uk/rss.xml")
