@@ -16,12 +16,11 @@ def lambda_handler(event, context):
     password = os.environ['password'] 
 
     # Function to split the result of the web scrape
+    
     def extrator(item):
         # Creates a list of header, body, long url, short url, time
-        try:
-            _, header, body, _, url, time, _ = item.split('\n')
-        except:
-            _, header, body, _, url, time, _, _ = item.split('\n')
+        cleaned_list = [entry for entry in item.split('\n') if entry != '']
+        header, body, url, time = cleaned_list[0], cleaned_list[1], cleaned_list[3], cleaned_list[4]
         return header, body, url, time
 
 
@@ -33,9 +32,12 @@ def lambda_handler(event, context):
         soup = bs4.BeautifulSoup(web_page.text,"xml") # creates the soup
         
         for item in soup.select('item'): # runs this code for each item found
-            header,body,url,time = extrator(item.text)
-            current_list.append(f'{header}:\n{body}\n{url}\n{time}\n'+'\n')
-    
+            # This try and except test makes the code more reliable, in case there are any news articles formatted in a way that the code is not expecting
+            try: 
+                header,body,url,time = extractor(item.text)
+                current_list.append(f'{header}:\n{body}\n{url}\n{time}\n'+'\n')
+            except:
+                continue    
         return current_list
 
     # Scraping and creating a list for each topic
